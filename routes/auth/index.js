@@ -48,7 +48,7 @@ authRoutes.post('/login', async (req, res, next) => {
         message: 'Logged in successfully!',
         token,
         userId: user._id,
-        username: user.username,
+        name: user.name,
       });
     }
   } catch (error) {
