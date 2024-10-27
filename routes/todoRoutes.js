@@ -2,9 +2,9 @@ const express = require('express');
 const todoRoutes = express();
 const Todo = require('../models/todo');
 
-todoRoutes.get('/getTodos', async (req, res, next) => {
+todoRoutes.get('/:userId', async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    const { userId } = req.params;
 
     // Find todos where the user is either the creator or an accessor
     const todosData = await Todo.find({
@@ -65,15 +65,16 @@ todoRoutes.patch('/updateTodoStatus', async (req, res, next) => {
     const todo = await Todo.findById(todoId);
     todo.status = status;
     await todo.save();
-    res.status(200);
+    res.status(200).send({ message: 'Todo status updated successfully' });
   } catch (error) {
     next(error);
   }
 });
 
-todoRoutes.patch('/addAccessor', async (req, res, next) => {
+todoRoutes.patch('/addAccessor/:userId', async (req, res, next) => {
   try {
-    const { userId, accessorId } = req.body;
+    const { userId } = req.params;
+    const { accessorId } = req.body;
 
     // Find todos where the user is either the creator or an accessor
     const todos = await Todo.find({
