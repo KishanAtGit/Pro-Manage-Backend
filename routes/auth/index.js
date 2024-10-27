@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
+const authenticator = require('../../middleware/authenticator');
 
 //to register an User
 authRoutes.post('/register', async (req, res, next) => {
@@ -48,6 +49,7 @@ authRoutes.post('/login', async (req, res, next) => {
         message: 'Logged in successfully!',
         token,
         userId: user._id,
+        email: user.email,
         name: user.name,
       });
     }
@@ -55,5 +57,22 @@ authRoutes.post('/login', async (req, res, next) => {
     next(error);
   }
 });
+
+authRoutes.get(
+  '/getAllUsers/:emailId',
+  authenticator,
+  async (req, res, next) => {
+    try {
+      const emailId = req.params.emailId;
+      const users = await User.find({});
+      const emails = users
+        .map(user => user.email)
+        .filter(email => email !== emailId);
+      res.status(200).json({ emails });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 module.exports = authRoutes;

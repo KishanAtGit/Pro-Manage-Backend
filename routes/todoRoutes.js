@@ -34,26 +34,19 @@ todoRoutes.get('/:userId', async (req, res, next) => {
 
 todoRoutes.post('/createTodo', async (req, res, next) => {
   try {
-    const {
-      title,
-      priority,
-      assignedTo,
-      checklist,
-      dueDate,
-      status,
-      createdBy,
-    } = req.body;
+    const { title, priority, assignedTo, checklist, dueDate, createdBy } =
+      req.body;
     const newTodo = new Todo({
       title,
       priority,
       assignedTo,
       checklist,
       dueDate,
-      status,
+      status: 'todo',
       createdBy,
     });
     await newTodo.save();
-    res.status(201).json(newTodo);
+    res.status(201).json({ message: 'Todo created successfully!' });
   } catch (error) {
     next(error);
   }
