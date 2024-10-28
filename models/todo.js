@@ -4,7 +4,10 @@ const Schema = mongoose.Schema;
 const todoSchema = new Schema({
   title: String,
   priority: String,
-  assignedTo: String,
+  assignedTo: {
+    userId: String,
+    email: String,
+  },
   checklist: [
     {
       description: String,

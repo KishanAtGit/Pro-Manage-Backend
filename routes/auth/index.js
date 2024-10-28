@@ -49,8 +49,8 @@ authRoutes.post('/login', async (req, res, next) => {
         message: 'Logged in successfully!',
         token,
         userId: user._id,
-        email: user.email,
         name: user.name,
+        email: user.email,
       });
     }
   } catch (error) {
@@ -59,16 +59,21 @@ authRoutes.post('/login', async (req, res, next) => {
 });
 
 authRoutes.get(
-  '/getAllUsers/:emailId',
+  '/getAllUsers/:userId',
   authenticator,
   async (req, res, next) => {
     try {
-      const emailId = req.params.emailId;
+      const userId = req.params.userId;
       const users = await User.find({});
-      const emails = users
-        .map(user => user.email)
-        .filter(email => email !== emailId);
-      res.status(200).json({ emails });
+      const userList = users
+        .map(user => {
+          return {
+            userId: user._id.toString(),
+            email: user.email,
+          };
+        })
+        .filter(user => user.userId !== userId);
+      res.status(200).json({ userList });
     } catch (error) {
       next(error);
     }

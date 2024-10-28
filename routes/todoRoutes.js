@@ -6,11 +6,11 @@ todoRoutes.get('/:userId', async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    // Find todos where the user is either the creator or an accessor
+    // Find todos where the user is either the creator or an accessor or if assigned to the user
     const todosData = await Todo.find({
       $or: [
         { createdBy: userId },
-        { assignedTo: userId },
+        { 'assignedTo.userId': userId },
         { accessors: { $elemMatch: { accessorId: userId } } },
       ],
     });
@@ -34,8 +34,9 @@ todoRoutes.get('/:userId', async (req, res, next) => {
 
 todoRoutes.post('/createTodo', async (req, res, next) => {
   try {
-    const { title, priority, assignedTo, checklist, dueDate, createdBy } =
+    const { title, priority, checklist, assignedTo, dueDate, createdBy } =
       req.body;
+
     const newTodo = new Todo({
       title,
       priority,
@@ -59,6 +60,29 @@ todoRoutes.patch('/updateTodoStatus', async (req, res, next) => {
     todo.status = status;
     await todo.save();
     res.status(200).send({ message: 'Todo status updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+todoRoutes.delete('/deleteTodo', async (req, res, next) => {
+  try {
+    const { todoId } = req.body;
+    await Todo.findByIdAndDelete(todoId);
+    res.status(200).send({ message: 'Todo deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+todoRoutes.patch('/updateChecklist', async (req, res, next) => {
+  try {
+    const { todoId, checklistId } = req.body;
+    const todo = await Todo.findById(todoId);
+    const checklist = todo.checklist.find(item => item.id === checklistId);
+    checklist.checked = !checklist.checked;
+    await todo.save();
+    res.status(200).send({ message: 'Checklist updated successfully' });
   } catch (error) {
     next(error);
   }
