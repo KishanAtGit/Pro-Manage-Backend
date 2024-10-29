@@ -65,16 +65,6 @@ todoRoutes.patch('/updateTodoStatus', async (req, res, next) => {
   }
 });
 
-todoRoutes.delete('/deleteTodo', async (req, res, next) => {
-  try {
-    const { todoId } = req.body;
-    await Todo.findByIdAndDelete(todoId);
-    res.status(200).send({ message: 'Todo deleted successfully' });
-  } catch (error) {
-    next(error);
-  }
-});
-
 todoRoutes.patch('/updateChecklist', async (req, res, next) => {
   try {
     const { todoId, checklistId } = req.body;
@@ -83,6 +73,33 @@ todoRoutes.patch('/updateChecklist', async (req, res, next) => {
     checklist.checked = !checklist.checked;
     await todo.save();
     res.status(200).send({ message: 'Checklist updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+todoRoutes.patch('/updateTodo', async (req, res, next) => {
+  try {
+    const { todoId, title, priority, assignedTo, checklist, dueDate } =
+      req.body;
+    const todo = await Todo.findById(todoId);
+    todo.title = title;
+    todo.priority = priority;
+    todo.assignedTo = assignedTo;
+    todo.checklist = checklist;
+    todo.dueDate = dueDate;
+    await todo.save();
+    res.status(200).send({ message: 'Todo updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+todoRoutes.delete('/deleteTodo', async (req, res, next) => {
+  try {
+    const { todoId } = req.body;
+    await Todo.findByIdAndDelete(todoId);
+    res.status(200).send({ message: 'Todo deleted successfully' });
   } catch (error) {
     next(error);
   }
