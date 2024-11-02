@@ -5,9 +5,13 @@ const Todo = require('../models/todo');
 todoRoutes.get('/:userId', async (req, res, next) => {
   try {
     const { userId } = req.params;
+    const analytics = req.query.analytics === 'true';
+    const today = req.query.filter === 'today';
+    const thisWeek = req.query.filter === 'thisWeek';
+    const thisMonth = req.query.filter === 'thisMonth';
 
     // Find todos where the user is either the creator or an accessor or if assigned to the user
-    const todosData = await Todo.find({
+    let todosData = await Todo.find({
       $or: [
         { createdBy: userId },
         { 'assignedTo.userId': userId },
@@ -15,18 +19,68 @@ todoRoutes.get('/:userId', async (req, res, next) => {
       ],
     });
 
-    // categories todos
+    // Filter based on the query
+    const now = new Date();
+    if (today) {
+      todosData = todosData.filter(todo => {
+        const dueDate = new Date(todo.dueDate);
+        return dueDate.toDateString() === now.toDateString();
+      });
+    } else if (thisWeek) {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Set to the first day of the week (Sunday)
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); // Set to the last day of the week (Saturday)
+
+      todosData = todosData.filter(todo => {
+        const dueDate = new Date(todo.dueDate);
+        return dueDate >= startOfWeek && dueDate <= endOfWeek;
+      });
+    } else if (thisMonth) {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of the current month
+
+      todosData = todosData.filter(todo => {
+        const dueDate = new Date(todo.dueDate);
+        return dueDate >= startOfMonth && dueDate <= endOfMonth;
+      });
+    }
+
+    // Categorize todos
     const backlog = todosData.filter(todo => todo.status === 'backlog');
     const todos = todosData.filter(todo => todo.status === 'todo');
     const inProgress = todosData.filter(todo => todo.status === 'in-Progress');
     const done = todosData.filter(todo => todo.status === 'done');
 
-    res.status(200).json({
-      backlog,
-      todos,
-      inProgress,
-      done,
-    });
+    if (analytics) {
+      // Count the number of todos by priority
+      const priorityCounts = {
+        low: todosData.filter(todo => todo.priority === 'low').length,
+        moderate: todosData.filter(todo => todo.priority === 'moderate').length,
+        high: todosData.filter(todo => todo.priority === 'high').length,
+      };
+
+      // Count the number of todos by due date (e.g., for upcoming deadlines)
+      const dueDateCount = todosData.filter(todo => todo.dueDate).length;
+
+      res.status(200).json({
+        backlog,
+        todos,
+        inProgress,
+        done,
+        analytics: {
+          priorityCounts,
+          dueDateCount,
+        },
+      });
+    } else {
+      res.status(200).json({
+        backlog,
+        todos,
+        inProgress,
+        done,
+      });
+    }
   } catch (error) {
     next(error);
   }
